@@ -188,7 +188,7 @@
       <div class="flex-shrink-0">
         <a href="home.html"
           class="bg-[#088178] hover:bg-[#066f65] text-white font-bold text-sm sm:text-base py-2 px-4 rounded-md transition duration-200 whitespace-nowrap">
-          Generate ColdMail
+          Analyse Your Resume
         </a>
       </div>
 
@@ -282,26 +282,25 @@
           <!-- Generated Mail Output -->
           <div class="mb-6">
             <h2 class="font-semibold text-lg mb-2">Generated Mail</h2>
-            <textarea placeholder="Your Generated Cold Mail Will Appear Here...."
+            <textarea id="generatedMail" placeholder="Your Generated Cold Mail Will Appear Here...."
               class="w-full h-48 border border-gray-400 rounded-md p-2 text-sm resize-none focus:outline-none focus:ring-0"></textarea>
           </div>
 
           <!-- Action Buttons -->
           <div class="flex flex-col sm:flex-row flex-wrap gap-4">
-            <button
+            <button id="copyBtn"
               class="flex items-center justify-center bg-blue-500 text-white px-4 py-2 rounded-md font-light hover:bg-blue-600 shadow-md">
               <i class="fa-solid fa-copy mr-2"></i> Copy Mail
             </button>
-            <button
+            <button id="downloadBtn"
               class="flex items-center justify-center bg-red-500 text-white px-4 py-2 rounded-md font-light hover:bg-red-600 shadow-md">
               <i class="fa-solid fa-cloud-arrow-down mr-2"></i> Download Mail
             </button>
-            <button
+            <button id="sendBtn"
               class="flex items-center justify-center bg-green-500 text-white px-4 py-2 rounded-md font-light hover:bg-green-600 shadow-md">
               <i class="fa-solid fa-share mr-2"></i> Send Mail
             </button>
           </div>
-
         </div>
       </div>
     </div>
@@ -424,6 +423,49 @@
       toneInput.value = Array.from(selectedTexts).join(", ");
     });
   });
+
+  // Reference to the textarea
+  const mailText = document.getElementById("generatedMail");
+
+  // COPY BUTTON
+  document.getElementById("copyBtn").addEventListener("click", () => {
+    navigator.clipboard.writeText(mailText.value).then(() => {
+      alert("Email copied to clipboard!");
+    }).catch((err) => {
+      alert("Failed to copy: " + err);
+    });
+  });
+
+  // DOWNLOAD BUTTON
+  document.getElementById("downloadBtn").addEventListener("click", () => {
+    const blob = new Blob([mailText.value], { type: "text/plain" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "cold-email.txt";
+    a.click();
+    URL.revokeObjectURL(url);
+  });
+
+  // SEND BUTTON - Open Gmail with body autofilled (auto-paste simulation)
+  document.getElementById("sendBtn").addEventListener("click", () => {
+    const emailContent = document.getElementById("generatedMail").value.trim();
+
+    if (!emailContent) {
+      alert("Generated email is empty.");
+      return;
+    }
+
+    const subject = encodeURIComponent("Job Opportunity Inquiry");
+    const body = encodeURIComponent(emailContent);
+
+    // Gmail Compose URL
+    const gmailURL = `https://mail.google.com/mail/?view=cm&fs=1&to=&su=${subject}&body=${body}`;
+
+    // Open in new tab (simulate "paste" by pre-filling)
+    window.open(gmailURL, "_blank");
+  });
+
 </script>
 
 
