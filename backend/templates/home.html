@@ -1,0 +1,365 @@
+{% load static tailwind_tags %}
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <title>Coldmail Generator</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="X-UA-Compatible" content="ie=edge">
+  {% tailwind_css %}
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
+  <style>
+    /* Padding and Margin Utilities */
+    .section-p1 {
+      padding: 40px 80px;
+    }
+
+    .section-m1 {
+      margin: 40px 20px;
+    }
+
+    /* Navbar Base Styling */
+    .navbar .active {
+      color: #088178;
+      position: relative;
+    }
+
+    .navbar a {
+      position: relative;
+      transition: color 0.3s ease;
+    }
+
+    .navbar a:hover,
+    .navbar a.active {
+      color: #088178;
+    }
+
+    /* Only apply ::after effect to navbuttons links */
+    .navbuttons a::after {
+      content: "";
+      position: absolute;
+      width: 0%;
+      height: 2px;
+      left: 0;
+      bottom: -4px;
+      background-color: #088178;
+      transition: width 0.3s ease;
+    }
+
+    .navbuttons a:hover::after,
+    .navbuttons a.active::after {
+      width: 50%;
+    }
+
+    /* Hamburger Button Styling */
+    #menu-btn {
+      background: none;
+      border: none;
+      cursor: pointer;
+      color: #333;
+    }
+
+    /* Responsive Adjustments */
+    @media (max-width: 500px) {
+      .section-p1 {
+        padding: 20px;
+      }
+
+      .section-m1 {
+        margin: 20px 10px;
+      }
+
+      header .logo {
+        margin-left: 10px;
+      }
+
+      header .navbuttons {
+        padding: 0 10px;
+      }
+
+      .section-m1 h1 {
+        font-size: 1.8rem;
+        line-height: 2.2rem;
+      }
+
+      .section-m1 a {
+        font-size: 0.9rem;
+        padding: 10px 16px;
+      }
+
+      .grid {
+        grid-template-columns: 1fr !important;
+        padding: 0 !important;
+      }
+
+      .grid>div {
+        padding: 20px;
+      }
+
+      .how-it-works-text {
+        margin-left: 5% !important;
+        margin-right: 5% !important;
+      }
+
+      img {
+        max-width: 90%;
+        height: auto;
+      }
+
+      .navbuttons a {
+        margin-bottom: 6px;
+      }
+    }
+
+    @media (max-width: 450px) {
+      .dropzone-custom {
+        height: 280px !important;
+      }
+
+      .custom-container {
+        width: 90% !important;
+        margin-left: auto !important;
+        margin-right: auto !important;
+        padding: 1.5rem !important;
+      }
+
+      .custom-heading {
+        font-size: 1.5rem !important;
+      }
+    }
+
+    @media (max-width: 450px) {
+      .dropzone-custom {
+        height: 280px !important;
+      }
+
+      .custom-container {
+        width: 90% !important;
+        margin-left: auto !important;
+        margin-right: auto !important;
+        padding: 1.5rem !important;
+      }
+
+      .custom-heading {
+        font-size: 1.5rem !important;
+      }
+    }
+
+    .color-block {
+      width: fit-content;
+      border-radius: 0.5rem;
+      cursor: pointer;
+      position: relative;
+    }
+
+    .color-block.selected::after {
+      content: "×";
+      position: absolute;
+      top: -10px;
+      right: -10px;
+      background-color: white;
+      color: black;
+      border-radius: 9999px;
+      padding: 2px 6px;
+      font-weight: bold;
+      cursor: pointer;
+      font-size: 16px;
+      box-shadow: 0 0 2px rgba(0, 0, 0, 0.4);
+    }
+
+    .color-block.selected {
+      outline: 3px solid black;
+      opacity: 0.8;
+    }
+  </style>
+</head>
+
+<body>
+  <header class="sticky top-0 z-50 bg-white shadow-xl ring-1 ring-gray-200 w-full">
+    <div class="flex items-center justify-between px-4 py-2 max-w-7xl mx-auto w-full">
+
+      <!-- Logo (Left) -->
+      <div class="logo flex-shrink-0">
+        <a href="{% url 'index_view' %}">
+          <h1 class="text-base sm:text-xl font-bold text-[#658560]">ColdMail AI</h1>
+        </a>
+      </div>
+
+      <!-- Button (Right) -->
+      <div class="flex-shrink-0">
+        <a href="{% url 'home_view' %}"
+          class="bg-[#088178] hover:bg-[#066f65] text-white font-bold text-sm sm:text-base py-2 px-4 rounded-md transition duration-200 whitespace-nowrap">
+          Analyse Your Resume
+        </a>
+      </div>
+
+    </div>
+  </header>
+
+  <div class="min-h-screen bg-gray-50 flex items-start justify-center px-4 py-12">
+    <div class="flex flex-col lg:flex-row w-full max-w-7xl gap-8">
+
+      <!-- Left: Form Section -->
+      <div class="flex-1">
+
+        <!-- Heading -->
+        <div class="mb-8 text-center lg:text-left">
+          <h1 class="text-3xl sm:text-4xl font-extrabold text-gray-900">
+            Generate Your Cold Email with AI
+          </h1>
+          <p class="mt-2 text-sm sm:text-base text-gray-500">
+            Upload your resume, add job details, and get a ready-to-send cold email
+          </p>
+        </div>
+
+        <!-- Form Card -->
+        <div class="bg-white p-6 rounded-lg shadow-lg">
+
+          <!-- Step 1: Upload Resume -->
+          <div class="mb-6">
+            <h2 class="font-semibold text-lg mb-2">Step 1: Upload Resume Files</h2>
+            <p class="text-sm text-gray-600 mb-4">
+              You can either drag & drop your PDF/DOCX files here or select them manually.
+            </p>
+
+            <div id="dropZone"
+              class="border-2 border-dashed border-gray-300 rounded-lg h-48 flex flex-col justify-center items-center text-center px-4 cursor-pointer hover:border-[#658560] transition-colors relative mb-4">
+              <span class="text-3xl text-gray-500 mb-2">
+                <i class="fa-solid fa-cloud-arrow-up"></i>
+              </span>
+              <p class="text-sm text-gray-600 font-medium mb-3">
+                Drag & drop your PDF/DOCX files here
+              </p>
+              <label for="fileInput"
+                class="bg-[#658560] hover:bg-[#4a6341] text-white text-sm font-semibold px-4 py-2 rounded cursor-pointer">
+                Select Files
+              </label>
+              <p class="text-xs text-gray-400 mt-2">Accepted formats: PDF, DOCX</p>
+              <input type="file" id="fileInput" accept=".pdf,.docx" multiple class="hidden" />
+            </div>
+          </div>
+
+          <!-- Step 2: Job Role -->
+          <div class="mb-6">
+            <h2 class="font-semibold text-lg mb-2">Step 2: Target Job Role</h2>
+            <input type="text" placeholder="e.g. Frontend Developer at Google."
+              class="w-full h-10 border border-gray-400 rounded-md pl-2 text-sm focus:outline-none focus:ring-0" />
+          </div>
+
+          <!-- Step 3: Select Tone -->
+          <div class="mb-6">
+            <h2 class="font-semibold text-lg mb-2">Step 3: Select Tone</h2>
+            <input id="toneInput" type="text" placeholder="Selected tone will appear here"
+              class="w-full border border-gray-400 rounded-md pl-2 py-2 text-sm focus:outline-none focus:ring-0 mb-4" />
+
+            <!-- Tone Options -->
+            <div id="colorContainer" class="flex flex-wrap gap-4">
+              <div
+                class="color-block bg-blue-500 text-white px-4 py-2 rounded text-sm text-center cursor-pointer w-full sm:w-auto"
+                data-color="Blue" data-text="Calm">
+                Calm
+              </div>
+              <div
+                class="color-block bg-green-500 text-white px-4 py-2 rounded text-sm text-center cursor-pointer w-full sm:w-auto"
+                data-color="Green" data-text="Natural">
+                Natural
+              </div>
+              <div
+                class="color-block bg-yellow-500 text-white px-4 py-2 rounded text-sm text-center cursor-pointer w-full sm:w-auto"
+                data-color="Yellow" data-text="Energetic">
+                Energetic
+              </div>
+            </div>
+          </div>
+
+          <!-- Generate Button -->
+          <div class="mb-6">
+            <button type="submit"
+              class="w-full h-10 bg-[#658560] text-white font-medium text-md rounded-md hover:bg-[#445840] transition-colors">
+              <i class="fa-solid fa-wand-magic mr-2"></i> Generate Cold-Mail
+            </button>
+          </div>
+
+          <!-- Generated Mail Output -->
+          <div class="mb-6">
+            <h2 class="font-semibold text-lg mb-2">Generated Mail</h2>
+            <textarea id="generatedMail" placeholder="Your Generated Cold Mail Will Appear Here...."
+              class="w-full h-48 border border-gray-400 rounded-md p-2 text-sm resize-none focus:outline-none focus:ring-0"></textarea>
+          </div>
+
+          <!-- Action Buttons -->
+          <div class="flex flex-col sm:flex-row flex-wrap gap-4">
+            <button id="copyBtn"
+              class="flex items-center justify-center bg-blue-500 text-white px-4 py-2 rounded-md font-light hover:bg-blue-600 shadow-md">
+              <i class="fa-solid fa-copy mr-2"></i> Copy Mail
+            </button>
+            <button id="downloadBtn"
+              class="flex items-center justify-center bg-red-500 text-white px-4 py-2 rounded-md font-light hover:bg-red-600 shadow-md">
+              <i class="fa-solid fa-cloud-arrow-down mr-2"></i> Download Mail
+            </button>
+            <button id="sendBtn"
+              class="flex items-center justify-center bg-green-500 text-white px-4 py-2 rounded-md font-light hover:bg-green-600 shadow-md">
+              <i class="fa-solid fa-share mr-2"></i> Send Mail
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+
+  <footer class="bg-[#323433] text-white pt-10 pb-6 mt-12">
+    <div class="max-w-7xl mx-auto px-6 sm:px-10">
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+        <!-- Brand Info -->
+        <div>
+          <h2 class="text-2xl font-extrabold mb-2">ColdMail AI</h2>
+          <p class="text-sm text-gray-300">
+            Transform your outreach with intelligent, personalized cold emails
+            powered by AI. Built for job seekers, professionals, and creators.
+          </p>
+        </div>
+
+        <!-- Quick Links -->
+        <div>
+          <h3 class="text-lg font-semibold mb-3">Quick Links</h3>
+          <ul class="space-y-2 text-sm">
+            <li>
+              <a href="{% url 'home_view' %}" class="hover:underline hover:text-amber-300">Home</a>
+            </li>
+            <li>
+              <a href="{% url 'home_view' %}" class="hover:underline hover:text-amber-300">About</a>
+            </li>
+            <li>
+              <a href="{% url 'home_view' %}" class="hover:underline hover:text-amber-300">Contact</a>
+            </li>
+            <li>
+              <a href="#" class="hover:underline hover:text-amber-300">Privacy Policy</a>
+            </li>
+          </ul>
+        </div>
+
+        <!-- Connect -->
+        <div>
+          <h3 class="text-lg font-semibold mb-3">Stay Connected</h3>
+          <p class="text-sm text-gray-300 mb-3">
+            Follow us for updates and tips:
+          </p>
+          <div class="flex space-x-5">
+            <a href="#" class="hover:text-amber-300 text-xl"><i class="fab fa-linkedin"></i></a>
+            <a href="#" class="hover:text-amber-300 text-xl"><i class="fab fa-twitter"></i></a>
+            <a href="#" class="hover:text-amber-300 text-xl"><i class="fab fa-github"></i></a>
+          </div>
+        </div>
+      </div>
+
+      <div class="border-t border-gray-500 mt-10 pt-4 text-center text-sm text-gray-300">
+        &copy; 2025 ColdMail AI. All rights reserved.
+      </div>
+    </div>
+  </footer>
+  <script src="{% static 'js\script.js' %}"></script>
+</body>
+
+</html>
