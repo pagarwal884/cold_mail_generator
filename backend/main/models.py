@@ -1,30 +1,35 @@
 from django.db import models
 from base.models import Basemodel
+from django.contrib.auth.hashers import make_password
 
-class User(Basemodel):
-    user_id = models.AutoField(primary_key=True)
+class CustomUser(Basemodel):
     mail = models.EmailField(unique=True)
     username = models.CharField(max_length=100)
-    password = models.CharField(max_length=128)  # You should store hashed passwords!
+    password = models.CharField(max_length=128)
 
     def __str__(self):
         return self.username
 
+    def save(self, *args, **kwargs):
+        self.password = make_password(self.password)
+        super().save(*args, **kwargs)
 
-class Filestore(Basemodel):
-    file_id = models.AutoField(primary_key=True)
-    file_uploaded = models.FileField(upload_to='uploads/')
-    date_of_file_upload = models.DateTimeField(auto_now_add=True)
+
+class ResumeFile(models.Model):
+    user = models.ForeignKey(CustomUser, on_delete=models.CASCADE, null=True, blank=True)
+    file = models.FileField(upload_to='resumes/')
+    uploaded_at = models.DateTimeField(auto_now_add=True)
+    processed = models.BooleanField(default=False)
+    processed_text = models.TextField(blank=True, null=True)
 
     def __str__(self):
-        return f"File {self.file_id} uploaded on {self.date_of_file_upload}"
+        return f"{self.file.name} ({'processed' if self.processed else 'unprocessed'})"
 
 
 class ColdMail(Basemodel):
-    coldmail_id = models.AutoField(primary_key=True)
     gen_response = models.TextField()
-    user = models.ForeignKey(User, on_delete=models.CASCADE)
-    file = models.ForeignKey(Filestore, on_delete=models.CASCADE)
+    user = models.ForeignKey(CustomUser, on_delete=models.CASCADE)
+    file = models.ForeignKey(ResumeFile, on_delete=models.CASCADE)
 
     def __str__(self):
-        return f"ColdMail {self.coldmail_id} for User {self.user.username}"
+        return f"ColdMail {self.id} for User {self.user.username}"
