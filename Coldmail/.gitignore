@@ -1,0 +1,50 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+*.pyc
+*.pdb
+*.egg-info/
+*.egg
+*.log
+
+# Django
+*.sqlite3
+db.sqlite3
+media/
+staticfiles/
+
+# VSCode
+.vscode/
+
+# Environment
+.env
+.env.*
+.venv/
+venv/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Pip
+pip-log.txt
+pip-delete-this-directory.txt
+
+# Test
+htmlcov/
+.coverage
+.tox/
+
+# Misc
+*.bak
+*.swp
+*.swo
+
+# Node
+node_modules/
+
+# Others
+*.orig
+*.tmp

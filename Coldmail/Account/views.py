@@ -9,6 +9,7 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework_simplejwt.views import TokenObtainPairView
 from .serializers import CustomTokenObtainPairSerializer, UserSerializer
 from django.contrib.auth import get_user_model
+from rest_framework_simplejwt.tokens import RefreshToken
 
 User = get_user_model()
 
@@ -29,3 +30,15 @@ class ProfileView(APIView):
     def get(self, request):
         user_data = UserSerializer(request.user).data
         return Response(user_data)
+
+class LogoutView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        try:
+            refresh_token = request.data["refresh"]
+            token = RefreshToken(refresh_token)
+            token.blacklist()
+            return Response({"message": "User logged out successfully"}, status=205)
+        except Exception as e:
+            return Response({"error": str(e)}, status=400)
