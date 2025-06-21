@@ -67,25 +67,45 @@ The user wants the email to have a {tone} tone.
         raise Exception(f"Failed to generate or parse Gemini AI response: {str(e)}")
 
 def parse_resume(file):
+    # Ensure file pointer is at start
+    if hasattr(file, 'seek') and callable(file.seek):
+        file.seek(0)
+    
+    # Read initial bytes for type detection
+    file_sample = file.read(1024)
+    file.seek(0)  # Reset file pointer
+    
+    # Detect MIME type using magic
+    try:
+        file_type = magic.from_buffer(file_sample, mime=True)
+    except AttributeError:
+        # Fallback if magic doesn't have from_buffer
+        import mimetypes
+        file_type = mimetypes.guess_type(file.name)[0]
+    
     text = ""
-    file_type = magic.from_buffer(file.read(1024), mime=True)
-    file.seek(0)
 
     if file_type == 'application/pdf':
-        with tempfile.NamedTemporaryFile(delete=False) as tmp:
+        with tempfile.NamedTemporaryFile(delete=False, suffix='.pdf') as tmp:
             for chunk in file.chunks() if hasattr(file, 'chunks') else [file.read()]:
                 tmp.write(chunk)
             tmp_path = tmp.name
-        text = extract_text(tmp_path)
-        os.unlink(tmp_path)
-    elif file_type == (
-                    'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-                    'application/zip',
-                ) or (hasattr(file, 'name') and file.name.lower().endswith('.docx')):
-        doc = Document(file)
-        text = '\n'.join([paragraph.text for paragraph in doc.paragraphs])
-    elif file_type == 'text/plain' or file_type == 'text/markdown':
-        text = file.read().decode('utf-8')
+        try:
+            text = extract_text(tmp_path)
+        finally:
+            os.unlink(tmp_path)
+    
+    elif file_type in [
+        'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+        'application/msword'
+    ]:
+        try:
+            doc = Document(file)
+            text = '\n'.join([paragraph.text for paragraph in doc.paragraphs])
+        except Exception as e:
+            raise Exception(f"Error parsing Word document: {str(e)}")
+    
     else:
         raise Exception(f"Unsupported file type: {file_type}")
+    
     return text

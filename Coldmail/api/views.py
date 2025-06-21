@@ -1,3 +1,5 @@
+import os
+import logging
 from rest_framework import generics
 from .models import ResumeData, GeminiMail
 from .serializers import ResumeDataSerializer, GeminiMailSerializer
@@ -7,6 +9,7 @@ from rest_framework.views import APIView
 from rest_framework.parsers import MultiPartParser, FormParser
 from .services import parse_resume, generate_cold_mail_gemini_api
 from django.db import transaction
+from django.conf import settings
 
 class GeminiMailDetailWithResumesView(generics.RetrieveAPIView):
     queryset = GeminiMail.objects.all()
@@ -68,8 +71,11 @@ class GenerateAndSaveMailView(APIView):
         if not all([target_role, target_company, tone, resume_content, resume_name]):
             return Response({'error': 'All fields are required.'}, status=400)
 
-        # Generate mail using Gemini
-        subject, body = generate_cold_mail_gemini_api(resume_content, target_company, target_role, tone)
+        try:
+            # Generate mail using Gemini
+            subject, body = generate_cold_mail_gemini_api(resume_content, target_company, target_role, tone)
+        except Exception as e:
+            return Response({'error': f'Failed to generate email: {str(e)}'}, status=500)
 
         with transaction.atomic():
             # Save GeminiMail
@@ -107,19 +113,50 @@ class DeleteMailHistoryView(APIView):
 class ParseResumeView(APIView):
     permission_classes = [IsAuthenticated]
     parser_classes = (MultiPartParser, FormParser)
+    MAX_FILE_SIZE = 5 * 1024 * 1024  # 5MB
+    ALLOWED_TYPES = [
+        'application/pdf', 
+        'application/msword',
+        'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+    ]
+    ALLOWED_EXTENSIONS = ['.pdf', '.doc', '.docx']
 
     def post(self, request, *args, **kwargs):
-        file = request.FILES.get('file')
-        if not file:
-            return Response({'error': 'No file provided.'}, status=400)
+        # Validate file existence
+        if 'file' not in request.FILES:
+            return Response({'error': 'No file provided'}, status=400)
+        
+        file = request.FILES['file']
+        
+        # Validate file size
+        if file.size > self.MAX_FILE_SIZE:
+            return Response({
+                'error': f'File too large. Max size: {self.MAX_FILE_SIZE//(1024*1024)}MB'
+            }, status=400)
+        
+        # Validate file type
+        if file.content_type not in self.ALLOWED_TYPES:
+            return Response({
+                'error': f'Unsupported file type. Allowed: PDF, DOC, DOCX'
+            }, status=400)
+
+        # Validate file extension
+        file_extension = os.path.splitext(file.name)[1].lower()
+        if file_extension not in self.ALLOWED_EXTENSIONS:
+            return Response({
+                'error': f'Invalid file extension. Allowed: {", ".join(self.ALLOWED_EXTENSIONS)}'
+            }, status=400)
+
         try:
+            # Process file through parser
             resume_content = parse_resume(file)
             resume_name = file.name
-            return Response({'resume_content': resume_content, 'resume_name': resume_name}, status=200)
+            return Response({
+                'resume_content': resume_content,
+                'resume_name': resume_name
+            }, status=200)
+            
         except Exception as e:
-            return Response({'error': str(e)}, status=500)
-
-
-
-
-
+            logging.getLogger(__name__).exception("Resume parsing failed")
+            error_msg = str(e) if settings.DEBUG else "Resume processing error"
+            return Response({'error': error_msg}, status=500)
