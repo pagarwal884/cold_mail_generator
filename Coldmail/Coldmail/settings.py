@@ -13,6 +13,7 @@ https://docs.djangoproject.com/en/5.2/ref/settings/
 from pathlib import Path
 import os
 from datetime import timedelta
+from google.oauth2 import service_account
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -33,17 +34,23 @@ ALLOWED_HOSTS = []
 # Application definition
 
 INSTALLED_APPS = [
-    'rest_framework',
-    'rest_framework_simplejwt',
-    "corsheaders",
-    'Account',
-    'api',
+    # Core Django apps
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    
+    # Third-party apps
+    'rest_framework',
+    'rest_framework_simplejwt',
+    'corsheaders',
+    'storages',  # For Google Cloud Storage
+
+    # Local apps
+    'Account',
+    'api',
 ]
 
 CORS_ALLOWED_ORIGINS = [
@@ -61,12 +68,12 @@ CORS_ALLOW_METHODS = (
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
+    'corsheaders.middleware.CorsMiddleware', 
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
-    'corsheaders.middleware.CorsMiddleware',
 ]
 
 REST_FRAMEWORK = {
@@ -100,8 +107,12 @@ WSGI_APPLICATION = 'Coldmail.wsgi.application'
 
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
+        'ENGINE': 'django.db.backends.postgresql',
+        'NAME': 'coldmaill',      # Cloud SQL database name
+        'USER': 'myuser',         # Cloud SQL username
+        'PASSWORD': 'coldmail_gen',  # Cloud SQL password
+        'HOST': '127.0.0.1',      # Use when Cloud SQL proxy is running
+        'PORT': '6543',           # Cloud SQL proxy port
     }
 }
 
@@ -146,9 +157,14 @@ STATIC_URL = 'static/'
 CORS_ALLOW_ALL_ORIGINS = True
 CORS_ALLOW_CREDENTIALS = True
 
-# File upload settings
-MEDIA_URL = '/media/'
-MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
+
+# Google Cloud Storage Configuration
+GS_BUCKET_NAME = 'coldmail-media'  # Your bucket name
+DEFAULT_FILE_STORAGE = 'storages.backends.gcloud.GoogleCloudStorage'
+GS_CREDENTIALS = service_account.Credentials.from_service_account_file(
+    'C:/Users/aanki/Downloads/coldmail-463609-3e8a47f7ab9e.json'  # Path to your service account key
+)
+MEDIA_URL = f'https://storage.googleapis.com/{GS_BUCKET_NAME}/'  
 
 
 # Default primary key field type
@@ -166,3 +182,7 @@ SIMPLE_JWT = {
     'ACCESS_TOKEN_LIFETIME': timedelta(minutes=30),  # default is 5 mins
     'REFRESH_TOKEN_LIFETIME': timedelta(days=7),
 }
+
+# Update file size limits (more readable format)
+DATA_UPLOAD_MAX_MEMORY_SIZE = 5 * 1024 * 1024  # 5MB
+FILE_UPLOAD_MAX_MEMORY_SIZE = 5 * 1024 * 1024  # 5MB
