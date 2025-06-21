@@ -25,6 +25,8 @@ class ResumeData(models.Model):
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
     gemini_mail = models.ForeignKey(GeminiMail, on_delete=models.CASCADE, related_name='resumes')
     target_company = models.CharField(max_length=255)
+    resume_name = models.CharField(max_length=255, null=True, blank=True)
+    resume_content = models.TextField(null=True, blank=True)
     target_role = models.CharField(max_length=255)
     tone = models.CharField(max_length=20, choices=TONE_CHOICES)
     file = models.FileField(upload_to='resume_files/', null=True, blank=True)

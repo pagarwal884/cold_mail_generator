@@ -1,12 +1,13 @@
 from django.urls import path, include
 from rest_framework.routers import DefaultRouter
-from .views import  GeminiMailDetailWithResumesView, UserMailHistoryView, GenerateAndSaveMailView, DeleteMailHistoryView
+from .views import  GeminiMailDetailWithResumesView, UserMailHistoryView, GenerateAndSaveMailView, DeleteMailHistoryView, ParseResumeView
 from rest_framework_simplejwt.views import (
     TokenObtainPairView,
     TokenRefreshView,
 )
 
 router = DefaultRouter()
+
 
 urlpatterns = [
     path('', include(router.urls)),
@@ -19,5 +20,6 @@ urlpatterns = [
     path('mail-history/', UserMailHistoryView.as_view(), name='mail-history'),  # GET: Get all mail history for the authenticated user
     path('generate-mail/', GenerateAndSaveMailView.as_view(), name='generate-mail'),  # POST: {file, target_role, target_company, tone} - Generate mail and save resume/mail
     path('delete-mail-history/<str:id>/', DeleteMailHistoryView.as_view(), name='delete-mail-history'),  # DELETE: Delete a mail history by GeminiMail ID
+    path('parse-resume/', ParseResumeView.as_view(), name='parse-resume'),
 ]
 

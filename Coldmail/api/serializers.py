@@ -5,9 +5,9 @@ from .models import ResumeData, GeminiMail
 class ResumeDataSerializer(serializers.ModelSerializer):
     class Meta:
         model = ResumeData
-        fields = '__all__'
+        fields = ['id', 'file', 'target_company', 'target_role', 'tone']
 
 class GeminiMailSerializer(serializers.ModelSerializer):
     class Meta:
         model = GeminiMail
-        fields = '__all__'
+        fields = ['id', 'subject', 'body']
