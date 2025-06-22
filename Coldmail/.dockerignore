@@ -1,0 +1,23 @@
+# .dockerignore
+.git
+.gitignore
+.env
+*.pyc
+__pycache__/
+.DS_Store
+*.sqlite3
+*.log
+Dockerfile
+docker-compose.yml
+.venv
+venv/
+env/
+*.md
+*.yml
+*.yaml
+Dockerfile.dev
+docker-compose.dev.yml
+.coverage
+htmlcov/
+staticfiles/
+media/

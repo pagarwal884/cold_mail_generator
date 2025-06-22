@@ -1,0 +1,134 @@
+# Dockerfile
+FROM python:3.11-slim-bullseye as builder
+
+# Set environment variables
+ENV PYTHONDONTWRITEBYTECODE 1
+ENV PYTHONUNBUFFERED 1
+ENV PIP_DISABLE_PIP_VERSION_CHECK 1
+ENV PIP_NO_CACHE_DIR 1
+
+# Install system dependencies
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends \
+    build-essential \
+    libpq-dev \
+    curl \
+    && rm -rf /var/lib/apt/lists/*
+
+# Create and activate virtual environment
+RUN python -m venv /opt/venv
+ENV PATH="/opt/venv/bin:$PATH"
+
+# Install Python dependencies
+COPY requirements.txt .
+RUN pip install --upgrade pip && \
+    pip install -r requirements.txt
+
+# ---- Runtime stage ----
+FROM python:3.11-slim-bullseye
+
+# Install runtime dependencies
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends \
+    libpq5 \
+    curl \
+    && rm -rf /var/lib/apt/lists/*
+
+# Copy virtual environment from builder
+COPY --from=builder /opt/venv /opt/venv
+ENV PATH="/opt/venv/bin:$PATH"
+
+# Set environment variables
+ENV PORT 8000
+ENV DJANGO_SETTINGS_MODULE Coldmail.settings
+ENV PYTHONPATH /app
+
+# Create and set working directory
+WORKDIR /app
+
+# Copy application code
+COPY . .
+COPY requirements.txt .
+
+
+
+# Create user and group to run as non-root
+RUN groupadd -r django && useradd -r -g django django && \
+    chown -R django:django /app
+
+# Collect static files
+RUN python manage.py collectstatic --noinput
+
+# Switch to non-root user
+USER django
+
+# Health check
+HEALTHCHECK --interval=30s --timeout=30s --start-period=5s --retries=3 \
+    CMD curl -f http://localhost:$PORT/health/ || exit 1
+
+# Run application
+CMD gunicorn --bind 0.0.0.0:$PORT \
+    --workers 3 \
+    --timeout 120 \
+    --worker-class gthread \
+    --threads 2 \
+    --log-level info \
+    --access-logfile - \
+    --error-logfile - \
+    Coldmail.wsgi:application
+
+# ----------------------------------------
+# Stage 1: Install dependencies
+# ----------------------------------------
+FROM python:3.11-slim-bullseye AS deps
+
+# Avoid prompts from apt
+ENV DEBIAN_FRONTEND=noninteractive
+
+# Set work directory
+WORKDIR /app
+
+# Install system dependencies for Python and libmagic (if needed)
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends gcc libmagic1 && \
+    rm -rf /var/lib/apt/lists/*
+
+# Install pip dependencies
+COPY requirements.txt .
+RUN pip install --upgrade pip && \
+    pip install --no-cache-dir -r requirements.txt
+
+
+# ----------------------------------------
+# Stage 2: Final image with app code
+# ----------------------------------------
+FROM python:3.11-slim-bullseye AS final
+
+# Set environment variables
+ENV PYTHONDONTWRITEBYTECODE=1 \
+    PYTHONUNBUFFERED=1 \
+    DEBIAN_FRONTEND=noninteractive
+
+# Set work directory
+WORKDIR /app
+
+# Install runtime dependencies (e.g., libmagic if python-magic is used)
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends libmagic1 && \
+    rm -rf /var/lib/apt/lists/*
+
+# Copy installed Python packages from builder
+COPY --from=deps /usr/local/lib/python3.11 /usr/local/lib/python3.11
+COPY --from=deps /usr/local/bin /usr/local/bin
+
+# Copy project files
+COPY . .
+
+# Run migrations and collectstatic (optional: only if needed)
+# RUN python manage.py migrate
+# RUN python manage.py collectstatic --noinput
+
+# Run the application using Gunicorn
+CMD ["gunicorn", "Coldmail.wsgi:application", "--bind", "0.0.0.0:8000"]
+
+RUN apt-get update && apt-get install -y --no-install-recommends libmagic1
