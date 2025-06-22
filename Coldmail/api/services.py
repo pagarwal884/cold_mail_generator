@@ -5,7 +5,6 @@ import re
 import google.generativeai as genai
 from django.conf import settings
 from dotenv import load_dotenv
-import magic
 import tempfile
 from pdfminer.high_level import extract_text
 from docx import Document
